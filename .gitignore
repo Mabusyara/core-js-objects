@@ -1,3 +1,6 @@
+#My ignore settings
+core-js-objects.code-workspace
+
 # Logs
 logs
 *.log
