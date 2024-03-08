@@ -362,33 +362,117 @@ function group(array, keySelector, valueSelector) {
  *  For more examples see unit tests.
  */
 
+class ElementSelector {
+  value = '';
+
+  lastTypeOfValue = -1;
+
+  flags = { element: false, id: false, pseudoElement: false };
+
+  constructor(value, type) {
+    this.checkTypeElement(type);
+    this.value = value;
+  }
+
+  element(value) {
+    this.value += `${value}`;
+    this.checkTypeElement('element');
+    return this;
+  }
+
+  id(value) {
+    this.value += `#${value}`;
+    this.checkTypeElement('id');
+    return this;
+  }
+
+  class(value) {
+    this.value += `.${value}`;
+    this.checkTypeElement('class');
+    return this;
+  }
+
+  attr(value) {
+    this.value += `[${value}]`;
+    this.checkTypeElement('attribute');
+    return this;
+  }
+
+  pseudoClass(value) {
+    this.value += `:${value}`;
+    this.checkTypeElement('pseudoClass');
+    return this;
+  }
+
+  pseudoElement(value) {
+    this.value += `::${value}`;
+    this.checkTypeElement('pseudoElement');
+    return this;
+  }
+
+  checkTypeElement(type) {
+    const selectors = [
+      'element',
+      'id',
+      'class',
+      'attribute',
+      'pseudoClass',
+      'pseudoElement',
+    ];
+    const indexOfType = selectors.indexOf(type);
+    if (
+      (this.flags.element && type === 'element') ||
+      (this.flags.id && type === 'id') ||
+      (this.flags.pseudoElement && type === 'pseudoElement')
+    )
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    if (type === 'element' || type === 'id' || type === 'pseudoElement')
+      this.flags[type] = true;
+    if (this.lastTypeOfValue === -1) this.lastTypeOfValue = indexOfType;
+    else if (this.lastTypeOfValue <= indexOfType)
+      this.lastTypeOfValue = indexOfType;
+    else
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+  }
+
+  stringify() {
+    return this.value;
+  }
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new ElementSelector(value, 'element');
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new ElementSelector(`#${value}`, 'id');
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new ElementSelector(`.${value}`, 'class');
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new ElementSelector(`[${value}]`, 'attribute');
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new ElementSelector(`:${value}`, 'pseudoClass');
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new ElementSelector(`::${value}`, 'pseudoElement');
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return new ElementSelector(
+      `${selector1.stringify()} ${combinator} ${selector2.stringify()}`
+    );
   },
 };
 
